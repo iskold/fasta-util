@@ -29,7 +29,11 @@ if len(sys.argv) == 2:
  if os.path.isfile(sys.argv[1]):
   myfile = sys.argv[1]
  else:
-  myfile = "scaffold.fa"
+  if os.path.isfile("scaffold.fa"):
+   myfile = "scaffold.fa"
+  else:
+   print("Can't read input file: {0}".format(sys.argv[1]))
+   sys.exit()
   try:
    n = int(sys.argv[1])
   except:
