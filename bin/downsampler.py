@@ -38,26 +38,14 @@ elif not args.o and len(args.i) == 1:
 			pass
 		else:
 			print("{0}".format(args[1].rstrip()))
-#             "{0}args[1],args[3]".rstrip(),end="******")
 else:
 	def oprint(*args,**kwargs):
 		writefastqs(args[0],args[1],args[2],args[3])
-		#writefastqs(args,kwargs)
 
-#if args.o:
-#	def oprint(*args,**kwargs):
-#		print(args[1])
-#		for arg in args:
-#			print(arg,**kwargs)
-#else:
-#	def oprint(*args,**kwargs):
-#		for arg in args:
-			
 if len(args.i) == 1: #syntax is writefastqs(fid1,entry1,fid2,entry2)
 	fastq1 = args.i[0]
 	if not args.o:
 		fastq1o = "tmp2"
-#		fastq1o = ".".join(args.i[0].split(".")[0:-1])+".DS.fq"
 	else:
 		fastq1o = args.o
 	fastq2 = "tmp1"
@@ -67,9 +55,9 @@ if len(args.i) == 1: #syntax is writefastqs(fid1,entry1,fid2,entry2)
 
 elif len(args.i) == 2:
 	fastq1 = args.i[0]
-	fastq1o = ".".join(args.i[0].split(".")[0:-1])+".DS.fq"
+	fastq1o = ".".join(args.i[0].strip(".gz").strip(".gzip").split(".")[0:-1])+".DS.fq"
 	fastq2 = args.i[1]
-	fastq2o = ".".join(args.i[1].split(".")[0:-1])+".DS.fq"
+	fastq2o = ".".join(args.i[1].strip(".gz").strip(".gzip").split(".")[0:-1])+".DS.fq"
 	def writefastqs(*args,**kwargs):
 		sup = args[0].write(args[1])
 		sup = args[2].write(args[3])
@@ -87,6 +75,7 @@ eprint("\n#Loading modules...",end="")
 import numpy as np
 import matplotlib.pyplot as plt
 import random
+import gzip
 eprint("Done!")
 sys.stdout.flush()
 n = args.t[0]
@@ -96,16 +85,42 @@ def fastqItr(myfile):
 	if myfile == "tmp1":
 		while 1:
 			yield ""
-	with open(myfile) as fid:
-		entry = ""
-		line = fid.readline()
-		while line:
-			entry += line
-			for i in range(3):
-				entry += fid.readline()
-			yield entry
+	ext = myfile.split(".")[-1]
+	if ext == "gz" or ext == "gzip":
+		with gzip.open(myfile,"rt") as fid:
 			entry = ""
 			line = fid.readline()
+			while line:
+				entry += line
+				for i in range(3):
+					entry += fid.readline()
+					yield entry
+				entry = ""
+				line = fid.readline()	
+	else:
+		with open(myfile) as fid:
+			entry = ""
+			line = fid.readline()
+			while line:
+				entry += line
+				for i in range(3):
+					entry += fid.readline()
+					yield entry
+				entry = ""
+				line = fid.readline()
+
+
+
+def fastqItr_generator(fid): #Had to split this up because of gzip, and "with"-statement messing up
+	entry = ""
+	line = fid.readline()
+	while line:
+		entry += line
+		for i in range(3):
+			entry += fid.readline()
+		yield entry
+		entry = ""
+		line = fid.readline()
 
 c = 0
 for entry in fastqItr(fastq1):
